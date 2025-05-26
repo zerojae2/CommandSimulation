@@ -23,7 +23,7 @@ while True:
             frame = pyautogui.screenshot()
             frame = np.array(frame)
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             val = model(frame)
 
             for r in val:
@@ -32,7 +32,7 @@ while True:
                 conf = boxes.conf
                 cls = boxes.cls
 
-            set_arr = ""
+            str_arr = ""
             for i in coord:
                 for j in i:
                     str_arr += str(j) + " "
