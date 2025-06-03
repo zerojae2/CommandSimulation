@@ -1,43 +1,48 @@
-import sys
 import socket
 from ultralytics import YOLO
 import numpy as np
 import cv2
 import pyautogui
-from PIL import Image
-from asyncio.windows_events import NULL
 
-server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-server.bind(('127.0.0.1',6001))
-model = YOLO("best.pt")
-
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('127.0.0.1', 6001))
 server.listen()
 
+model = YOLO("best.pt")
+print("Server started on 127.0.0.1:6001")
+
 while True:
-    client,address = server.accept()
-    print('Connected')
-    val = client.recv(1024).decode('utf-8')
-    print(val)
-    if val == 'click':
-        while True:
-            frame = pyautogui.screenshot()
-            frame = np.array(frame)
+    client, address = server.accept()
+    print(f'Connected: {address}')
+    try:
+        val = client.recv(1024).decode('utf-8').strip()
+        print(f'Received: {val}')
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            val = model(frame)
+        if val == 'click':
+            while True:
+                frame = pyautogui.screenshot()
+                frame = np.array(frame)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            for r in val:
-                boxes = r.boxes.cpu().numpy()
-                coord = boxes.xywhn
-                conf = boxes.conf
-                cls = boxes.cls
+                results = model(frame)
+                found_humen = False
 
-            str_arr = ""
-            for i in coord:
-                for j in i:
-                    str_arr += str(j) + " "
-            print(str_arr)
+                for r in results:
+                    boxes = r.boxes.cpu().numpy()
+                    classes = boxes.cls
 
-            client.send(str_arr.encode('utf-8'))
-            
-    client.close()
+                    for c in classes:
+                        class_name = model.names[int(c)]
+                        if class_name == "Humen":
+                            found_humen = True
+                            break  # 하나만 찾으면 됨
+
+                if found_humen:
+                    print("Sending: Humen")
+                    client.send(b"Humen")
+                
+
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        client.close()
