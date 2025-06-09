@@ -40,7 +40,9 @@ while True:
                 if found_humen:
                     print("Sending: Humen")
                     client.send(b"Humen")
-                
+                else:
+                    print("Sending: Nothing")
+                    client.send(b"Nothing")
 
     except Exception as e:
         print(f"Error: {e}")
